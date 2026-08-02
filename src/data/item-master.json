@@ -1,0 +1,43 @@
+{
+  "categories": [
+    { "id": "body", "name": "身体" },
+    { "id": "blood_pressure", "name": "血圧" },
+    { "id": "lipids", "name": "脂質" },
+    { "id": "liver", "name": "肝機能" },
+    { "id": "kidney", "name": "腎機能" },
+    { "id": "glucose", "name": "糖代謝" },
+    { "id": "uric_acid", "name": "尿酸" },
+    { "id": "blood_cells", "name": "血球" },
+    { "id": "urinalysis", "name": "尿検査" }
+  ],
+  "items": [
+    { "itemCode": "height", "displayName": "身長", "category": "body", "unit": "cm", "aliases": ["身長"] },
+    { "itemCode": "weight", "displayName": "体重", "category": "body", "unit": "kg", "aliases": ["体重"] },
+    { "itemCode": "bmi", "displayName": "BMI", "category": "body", "unit": "", "aliases": ["BMI", "肥満度"] },
+    { "itemCode": "waist", "displayName": "腹囲", "category": "body", "unit": "cm", "aliases": ["腹囲", "ウエスト"] },
+    { "itemCode": "systolic", "displayName": "収縮期血圧", "category": "blood_pressure", "unit": "mmHg", "aliases": ["収縮期血圧", "最高血圧"] },
+    { "itemCode": "diastolic", "displayName": "拡張期血圧", "category": "blood_pressure", "unit": "mmHg", "aliases": ["拡張期血圧", "最低血圧"] },
+    { "itemCode": "triglyceride", "displayName": "中性脂肪", "category": "lipids", "unit": "mg/dL", "aliases": ["中性脂肪", "TG"] },
+    { "itemCode": "ldl", "displayName": "LDLコレステロール", "category": "lipids", "unit": "mg/dL", "aliases": ["LDL", "LDL-C", "悪玉コレステロール"] },
+    { "itemCode": "hdl", "displayName": "HDLコレステロール", "category": "lipids", "unit": "mg/dL", "aliases": ["HDL", "HDL-C", "善玉コレステロール"] },
+    { "itemCode": "total_cholesterol", "displayName": "総コレステロール", "category": "lipids", "unit": "mg/dL", "aliases": ["総コレステロール", "T-CHO"] },
+    { "itemCode": "ast", "displayName": "AST（GOT）", "category": "liver", "unit": "U/L", "aliases": ["AST", "GOT", "AST（GOT）"] },
+    { "itemCode": "alt", "displayName": "ALT（GPT）", "category": "liver", "unit": "U/L", "aliases": ["ALT", "GPT", "ALT（GPT）"] },
+    { "itemCode": "gamma_gtp", "displayName": "γ-GTP", "category": "liver", "unit": "U/L", "aliases": ["γ-GTP", "γ-GT", "GGT"] },
+    { "itemCode": "alp", "displayName": "ALP", "category": "liver", "unit": "U/L", "aliases": ["ALP", "アルカリホスファターゼ"] },
+    { "itemCode": "ld", "displayName": "LD（LDH）", "category": "liver", "unit": "U/L", "aliases": ["LD", "LDH", "乳酸脱水素酵素"] },
+    { "itemCode": "creatinine", "displayName": "クレアチニン", "category": "kidney", "unit": "mg/dL", "aliases": ["クレアチニン", "CRE"] },
+    { "itemCode": "egfr", "displayName": "eGFR", "category": "kidney", "unit": "mL/分/1.73㎡", "aliases": ["eGFR"] },
+    { "itemCode": "bun", "displayName": "尿素窒素", "category": "kidney", "unit": "mg/dL", "aliases": ["尿素窒素", "BUN"] },
+    { "itemCode": "fasting_glucose", "displayName": "空腹時血糖", "category": "glucose", "unit": "mg/dL", "aliases": ["空腹時血糖", "血糖", "GLU"] },
+    { "itemCode": "hba1c", "displayName": "HbA1c", "category": "glucose", "unit": "%", "aliases": ["HbA1c", "ヘモグロビンA1c"] },
+    { "itemCode": "uric_acid", "displayName": "尿酸", "category": "uric_acid", "unit": "mg/dL", "aliases": ["尿酸", "UA"] },
+    { "itemCode": "red_blood_cells", "displayName": "赤血球数", "category": "blood_cells", "unit": "万/μL", "aliases": ["赤血球", "赤血球数", "RBC"] },
+    { "itemCode": "white_blood_cells", "displayName": "白血球数", "category": "blood_cells", "unit": "/μL", "aliases": ["白血球", "白血球数", "WBC"] },
+    { "itemCode": "hemoglobin", "displayName": "血色素量", "category": "blood_cells", "unit": "g/dL", "aliases": ["血色素量", "ヘモグロビン", "Hb"] },
+    { "itemCode": "platelets", "displayName": "血小板数", "category": "blood_cells", "unit": "万/μL", "aliases": ["血小板", "血小板数", "PLT"] },
+    { "itemCode": "urine_glucose", "displayName": "尿糖", "category": "urinalysis", "unit": "判定値", "aliases": ["尿糖"] },
+    { "itemCode": "urine_protein", "displayName": "尿蛋白", "category": "urinalysis", "unit": "判定値", "aliases": ["尿蛋白", "尿たんぱく"] },
+    { "itemCode": "urine_occult_blood", "displayName": "尿潜血", "category": "urinalysis", "unit": "判定値", "aliases": ["尿潜血"] }
+  ]
+}
