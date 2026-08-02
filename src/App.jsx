@@ -4,6 +4,7 @@ import {
   LabelList,
   Line,
   LineChart,
+  ReferenceArea,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -12,7 +13,14 @@ import {
 import itemMaster from './data/item-master.json'
 import measurementData from './data/measurements.json'
 
-const LINE_COLORS = ['#177d5b', '#d06b3c', '#3f6fb0', '#8b5ea8', '#a78724']
+const LINE_COLORS = ['#08a878', '#f07945', '#3688d8', '#8a6edb', '#e55f91']
+
+const getItemColor = (itemCode) => {
+  const item = itemMaster.items.find((entry) => entry.itemCode === itemCode)
+  const siblings = itemMaster.items.filter((entry) => entry.category === item.category)
+  const categoryIndex = siblings.findIndex((entry) => entry.itemCode === itemCode)
+  return LINE_COLORS[categoryIndex % LINE_COLORS.length]
+}
 
 const formatMonth = (date) => {
   const [year, month] = date.split('-')
@@ -44,6 +52,26 @@ function PointLabel({ x, y, value, fill }) {
       {value}
     </text>
   )
+}
+
+const getRangeStatus = (value, range) => {
+  if (!range || !Number.isFinite(value)) return null
+  if (range.lower !== null && value < range.lower) return '低値'
+  if (range.upper !== null && value > range.upper) return '高値'
+  return '基準内'
+}
+
+const formatRange = (range) => {
+  if (!range) return '基準範囲なし'
+  if (range.lower === null) return `${range.upper}以下`
+  if (range.upper === null) return `${range.lower}以上`
+  return `${range.lower}〜${range.upper}`
+}
+
+function MeasurementDot({ cx, cy, value, range, color }) {
+  const outside = getRangeStatus(value, range)
+  const stroke = outside && outside !== '基準内' ? '#d44f45' : color
+  return <circle cx={cx} cy={cy} r={4} fill="#fff" stroke={stroke} strokeWidth={3} />
 }
 
 function ChartTooltip({ active, payload, selectedItems }) {
@@ -133,8 +161,12 @@ export default function App() {
   const plottedValues = chartData.flatMap((record) => selectedCodes
     .map((code) => record[code])
     .filter((value) => Number.isFinite(value)))
-  const rawMin = Math.min(...plottedValues)
-  const rawMax = Math.max(...plottedValues)
+  const rangeValues = selectedItems.flatMap((item) => item.referenceRange
+    ? [item.referenceRange.lower, item.referenceRange.upper].filter(Number.isFinite)
+    : [])
+  const scaleValues = [...plottedValues, ...rangeValues]
+  const rawMin = Math.min(...scaleValues)
+  const rawMax = Math.max(...scaleValues)
   const yPadding = rawMax === rawMin ? Math.max(Math.abs(rawMax) * 0.1, 1) : (rawMax - rawMin) * 0.12
   const yDomain = [rawMin - yPadding, rawMax + yPadding]
   const yTicks = Array.from({ length: 5 }, (_, index) => {
@@ -178,7 +210,7 @@ export default function App() {
               {categoryItems.map((item) => {
                 const active = selectedCodes.includes(item.itemCode)
                 const disabled = !active && selectedCodes.length > 0 && item.unit !== selectedUnit
-                const color = active ? LINE_COLORS[selectedCodes.indexOf(item.itemCode) % LINE_COLORS.length] : null
+                const color = active ? getItemColor(item.itemCode) : null
                 return (
                   <button type="button" key={item.itemCode}
                     className={active ? 'item-button active' : 'item-button'}
@@ -203,13 +235,19 @@ export default function App() {
             </div>
 
             <div className="latest-grid">
-              {selectedItems.map((item, index) => {
+              {selectedItems.map((item) => {
                 const difference = previous ? Number((latest[item.itemCode] - previous[item.itemCode]).toFixed(2)) : null
+                const values = chartData.map((record) => record[item.itemCode]).filter(Number.isFinite)
+                const minimum = Math.min(...values)
+                const maximum = Math.max(...values)
+                const status = getRangeStatus(latest[item.itemCode], item.referenceRange)
                 return (
-                  <div className="latest-item" key={item.itemCode} style={{ '--series-color': LINE_COLORS[index % LINE_COLORS.length] }}>
+                  <div className="latest-item" key={item.itemCode} style={{ '--series-color': getItemColor(item.itemCode) }}>
                     <span>{item.displayName}</span>
                     <strong>{latest[item.itemCode]}<small>{item.unit}</small></strong>
                     {difference !== null && <em>前回比 {difference > 0 ? '+' : ''}{difference}</em>}
+                    {status && <b className={status === '基準内' ? 'range-ok' : 'range-alert'}>{status}</b>}
+                    <small className="min-max">最小 {minimum} ／ 最大 {maximum}</small>
                   </div>
                 )
               })}
@@ -244,11 +282,26 @@ export default function App() {
                     tick={{ fill: '#69736e', fontSize: 11 }} axisLine={false} tickLine={false} dy={8} />
                   <YAxis hide domain={yDomain} />
                   <Tooltip content={<ChartTooltip selectedItems={selectedItems} />} cursor={{ stroke: '#9cc6b5', strokeDasharray: '4 4' }} />
-                  {selectedItems.map((item, index) => {
-                    const color = LINE_COLORS[index % LINE_COLORS.length]
+                  {selectedItems.flatMap((item) => {
+                    if (!item.referenceRange) return []
+                    const color = getItemColor(item.itemCode)
+                    const areas = []
+                    if (item.referenceRange.lower !== null) {
+                      areas.push(<ReferenceArea key={`low-${item.itemCode}`} y1={yDomain[0]}
+                        y2={item.referenceRange.lower} fill={color} fillOpacity={0.08} strokeOpacity={0} />)
+                    }
+                    if (item.referenceRange.upper !== null) {
+                      areas.push(<ReferenceArea key={`high-${item.itemCode}`} y1={item.referenceRange.upper}
+                        y2={yDomain[1]} fill={color} fillOpacity={0.08} strokeOpacity={0} />)
+                    }
+                    return areas
+                  })}
+                  {selectedItems.map((item) => {
+                    const color = getItemColor(item.itemCode)
                     return (
                       <Line key={item.itemCode} type="linear" dataKey={item.itemCode} name={item.displayName}
-                        stroke={color} strokeWidth={3} dot={{ r: 4, fill: '#fff', stroke: color, strokeWidth: 3 }} activeDot={{ r: 7 }}>
+                        stroke={color} strokeWidth={3}
+                        dot={<MeasurementDot range={item.referenceRange} color={color} />} activeDot={{ r: 7 }}>
                         {showPointLabels && <LabelList dataKey={item.itemCode} content={<PointLabel fill={color} />} />}
                       </Line>
                     )
@@ -258,7 +311,14 @@ export default function App() {
                 </div>
               </div>
             </div>
+            <div className="range-legend">
+              {selectedItems.map((item) => (
+                <span key={item.itemCode}><i style={{ background: getItemColor(item.itemCode) }} />
+                  {item.displayName}：{formatRange(item.referenceRange)} {item.unit}</span>
+              ))}
+            </div>
             <p className="chart-note">横に動かして過去の記録を確認できます。点に触れると年月と測定値を表示します。</p>
+            <p className="reference-note">基準範囲は表示確認用のサンプルです。実際の健診結果に記載された基準値を使用してください。</p>
           </div>
         </section>
       </main>
