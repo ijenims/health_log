@@ -8,7 +8,9 @@
     { "id": "glucose", "name": "糖代謝" },
     { "id": "uric_acid", "name": "尿酸" },
     { "id": "blood_cells", "name": "血球" },
-    { "id": "urinalysis", "name": "尿検査" }
+    { "id": "urinalysis", "name": "尿検査" },
+    { "id": "prostate", "name": "前立腺" },
+    { "id": "gastric_screening", "name": "胃部検査" }
   ],
   "items": [
     { "itemCode": "height", "displayName": "身長", "category": "body", "unit": "cm", "aliases": ["身長"] },
@@ -24,6 +26,9 @@
     { "itemCode": "ast", "displayName": "AST（GOT）", "category": "liver", "unit": "U/L", "aliases": ["AST", "GOT", "AST（GOT）"], "referenceRange": { "lower": 13, "upper": 30 } },
     { "itemCode": "alt", "displayName": "ALT（GPT）", "category": "liver", "unit": "U/L", "aliases": ["ALT", "GPT", "ALT（GPT）"], "referenceRange": { "lower": 10, "upper": 42 } },
     { "itemCode": "gamma_gtp", "displayName": "γ-GTP", "category": "liver", "unit": "U/L", "aliases": ["γ-GTP", "γ-GT", "GGT"], "referenceRange": { "lower": 13, "upper": 64 } },
+    { "itemCode": "che", "displayName": "コリンエステラーゼ（ChE）", "category": "liver", "unit": "U/L", "aliases": ["ChE", "コリンエステラーゼ"] },
+    { "itemCode": "alp_ifcc", "displayName": "ALP（IFCC）", "category": "liver", "unit": "U/L", "aliases": ["ALP(IFCC)", "ALP（IFCC）"] },
+    { "itemCode": "alp_legacy", "displayName": "ALP（旧測定法）", "category": "liver", "unit": "U/L", "aliases": ["ALP"] },
     { "itemCode": "alp", "displayName": "ALP", "category": "liver", "unit": "U/L", "aliases": ["ALP", "アルカリホスファターゼ"], "referenceRange": { "lower": 38, "upper": 113 } },
     { "itemCode": "ld", "displayName": "LD（LDH）", "category": "liver", "unit": "U/L", "aliases": ["LD", "LDH", "乳酸脱水素酵素"], "referenceRange": { "lower": 124, "upper": 222 } },
     { "itemCode": "creatinine", "displayName": "クレアチニン", "category": "kidney", "unit": "mg/dL", "aliases": ["クレアチニン", "CRE"], "referenceRange": { "lower": 0.65, "upper": 1.07 } },
@@ -35,9 +40,14 @@
     { "itemCode": "red_blood_cells", "displayName": "赤血球数", "category": "blood_cells", "unit": "万/μL", "aliases": ["赤血球", "赤血球数", "RBC"] },
     { "itemCode": "white_blood_cells", "displayName": "白血球数", "category": "blood_cells", "unit": "/μL", "aliases": ["白血球", "白血球数", "WBC"] },
     { "itemCode": "hemoglobin", "displayName": "血色素量", "category": "blood_cells", "unit": "g/dL", "aliases": ["血色素量", "ヘモグロビン", "Hb"] },
+    { "itemCode": "hematocrit", "displayName": "ヘマトクリット", "category": "blood_cells", "unit": "%", "aliases": ["ヘマトクリット", "Ht"] },
     { "itemCode": "platelets", "displayName": "血小板数", "category": "blood_cells", "unit": "万/μL", "aliases": ["血小板", "血小板数", "PLT"] },
     { "itemCode": "urine_glucose", "displayName": "尿糖", "category": "urinalysis", "unit": "判定値", "aliases": ["尿糖"] },
     { "itemCode": "urine_protein", "displayName": "尿蛋白", "category": "urinalysis", "unit": "判定値", "aliases": ["尿蛋白", "尿たんぱく"] },
-    { "itemCode": "urine_occult_blood", "displayName": "尿潜血", "category": "urinalysis", "unit": "判定値", "aliases": ["尿潜血"] }
+    { "itemCode": "urine_occult_blood", "displayName": "尿潜血", "category": "urinalysis", "unit": "判定値", "aliases": ["尿潜血"] },
+    { "itemCode": "psa", "displayName": "高感度PSA", "category": "prostate", "unit": "ng/mL", "aliases": ["高感度PSA", "PSA"] },
+    { "itemCode": "pepsinogen_1", "displayName": "ペプシノゲンⅠ", "category": "gastric_screening", "unit": "ng/mL", "aliases": ["ペプシノゲンⅠ", "PGⅠ"] },
+    { "itemCode": "pepsinogen_2", "displayName": "ペプシノゲンⅡ", "category": "gastric_screening", "unit": "ng/mL", "aliases": ["ペプシノゲンⅡ", "PGⅡ"] },
+    { "itemCode": "pepsinogen_ratio", "displayName": "ペプシノゲン比（Ⅰ/Ⅱ）", "category": "gastric_screening", "unit": "", "aliases": ["ペプシノゲン比", "PGⅠ/Ⅱ比", "ペプシノゲンⅠ/Ⅱ比"] }
   ]
 }

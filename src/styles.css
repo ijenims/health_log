@@ -14,12 +14,20 @@ button { -webkit-tap-highlight-color: transparent; }
 .app-shell { min-height: 100vh; }
 .app-header { background: rgba(255,255,255,.96); border-bottom: 1px solid #dcefe7; }
 .header-inner { max-width: 1040px; margin: 0 auto; padding: 22px 20px; display: flex; align-items: center; gap: 13px; }
+.brand-copy { flex: 1; }
 .brand-mark { width: 42px; height: 42px; flex: 0 0 42px; border-radius: 13px; background: #d5f7ea; position: relative; box-shadow: 0 5px 14px rgba(8, 168, 120, .14); }
 .brand-mark::before, .brand-mark::after { content: ""; position: absolute; background: #08a878; border-radius: 4px; }
 .brand-mark::before { width: 20px; height: 6px; left: 11px; top: 18px; }
 .brand-mark::after { width: 6px; height: 20px; left: 18px; top: 11px; }
 .app-header h1 { font-size: 20px; margin: 0; letter-spacing: .04em; }
 .app-header p { color: #628174; font-size: 12px; margin: 1px 0 0; }
+.data-controls { display: flex; align-items: center; justify-content: flex-end; gap: 7px; flex-wrap: wrap; }
+.data-badge { padding: 4px 8px; border-radius: 20px; color: #657870; background: #edf3f0; font-size: 10px; font-weight: 700; }
+.data-badge.private { color: #057552; background: #dff8ee; }
+.import-button, .sample-button { padding: 7px 10px; border: 1px solid #a9dcca; border-radius: 8px; color: #057552; background: #fff; font-size: 10px; font-weight: 700; cursor: pointer; }
+.import-button input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.sample-button { color: #667770; border-color: #d5e4de; font-weight: 600; }
+.data-message { max-width: 1040px; margin: -13px auto 0; padding: 0 20px 10px; color: #177b59; font-size: 10px; text-align: right; }
 
 main { max-width: 1040px; margin: 0 auto; padding: 30px 16px 48px; }
 .category-section { margin-bottom: 26px; }
@@ -33,6 +41,19 @@ main { max-width: 1040px; margin: 0 auto; padding: 30px 16px 48px; }
 .category-button:hover { border-color: #56cba4; background: #f5fffb; }
 .category-button:active { transform: scale(.98); }
 .category-button.active { color: #057552; border-color: #08a878; background: #dff8ee; box-shadow: inset 0 0 0 1px #08a878, 0 4px 12px rgba(8, 168, 120, .1); }
+
+.charts-section { display: grid; gap: 18px; }
+.charts-toolbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.charts-toolbar h2 { margin: 0; font-size: 21px; }
+.charts-toolbar .eyebrow { margin-bottom: 1px; color: #08a878; }
+.charts-list { display: grid; gap: 18px; }
+.health-chart-card { overflow: hidden; border: 1px solid #dcece5; border-radius: 16px; background: #fff; box-shadow: 0 9px 26px rgba(20, 105, 76, .07); }
+.health-chart-card .latest-grid { padding: 18px 20px 14px; }
+.health-chart-card .latest-item { display: flex; align-items: baseline; gap: 11px; min-width: max-content; width: fit-content; padding: 11px 13px; }
+.health-chart-card .latest-item > span { color: #17362c; font-size: 15px; font-weight: 800; }
+.health-chart-card .latest-item strong { font-size: 20px; white-space: nowrap; }
+.health-chart-card .range-legend { padding-bottom: 15px; }
+.blood-pressure-chart .chart-area { height: 580px; }
 
 .result-card { overflow: hidden; background: white; border: 1px solid #dcece5; border-radius: 16px; box-shadow: 0 12px 34px rgba(20, 105, 76, .08); }
 .item-picker { padding: 22px 20px 24px; border-bottom: 1px solid #edf0ee; }
@@ -55,15 +76,10 @@ main { max-width: 1040px; margin: 0 auto; padding: 30px 16px 48px; }
 .latest-item > span { display: block; color: #69756f; font-size: 9px; white-space: nowrap; }
 .latest-item strong { display: block; color: var(--series-color); font-size: 19px; }
 .latest-item small { margin-left: 3px; font-size: 8px; }
-.latest-item em { color: #758079; font-size: 9px; font-style: normal; }
-.latest-item b { display: inline-block; margin: 5px 0 2px; padding: 2px 6px; border-radius: 10px; font-size: 9px; }
-.latest-item .range-ok { color: #057a55; background: #dff7ed; }
-.latest-item .range-alert { color: #b33d35; background: #fae8e6; }
-.latest-item .min-max { display: block; color: #7c8781; font-size: 8px; }
 .period-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 8px 10px; }
-.period-bar > span { color: #68746e; font-size: 11px; font-weight: 700; }
+.period-bar > span { color: #68746e; font-size: 16px; font-weight: 700; }
 .period-bar > div { display: flex; padding: 3px; border-radius: 9px; background: #e6f5ef; }
-.period-bar button { min-width: 48px; padding: 5px 9px; border: 0; border-radius: 7px; color: #66736c; background: transparent; font-size: 11px; cursor: pointer; }
+.period-bar button { min-width: 58px; padding: 7px 11px; border: 0; border-radius: 7px; color: #66736c; background: transparent; font-size: 16px; cursor: pointer; }
 .period-bar button.active { color: #067c58; background: #fff; box-shadow: 0 2px 7px rgba(8, 168, 120, .16); font-weight: 700; }
 .chart-area { position: relative; width: 100%; height: 290px; }
 .chart-scroll { width: 100%; height: 100%; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #b5c8c0 transparent; -webkit-overflow-scrolling: touch; }
@@ -92,15 +108,25 @@ footer { padding: 22px; text-align: center; color: #6f8b7f; font-size: 11px; bor
   .header-inner { padding: 26px 24px; }
   .app-header h1 { font-size: 23px; }
   main { padding: 42px 24px 64px; }
-  .category-list { grid-template-columns: repeat(9, 1fr); }
+  .category-list { grid-template-columns: repeat(auto-fit, minmax(78px, 1fr)); }
   .category-button { min-height: 52px; font-size: 13px; }
   .result-card { display: grid; grid-template-columns: 260px 1fr; min-height: 440px; }
   .item-picker { padding: 28px 24px; border-right: 1px solid #edf0ee; border-bottom: 0; }
   .chart-panel { padding: 28px 28px 22px; }
   .chart-area { height: 340px; }
+  .blood-pressure-chart .chart-area { height: 680px; }
 }
 
 @media (max-width: 420px) {
+  .header-inner { align-items: flex-start; flex-wrap: wrap; }
+  .brand-copy { min-width: 180px; }
+  .data-controls { width: 100%; justify-content: flex-start; padding-left: 55px; }
+  .data-message { margin-top: -5px; text-align: left; padding-left: 75px; }
+  .charts-toolbar { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .charts-toolbar .period-bar { width: 100%; padding-right: 0; padding-left: 0; }
+  .health-chart-card .latest-grid { padding-right: 14px; padding-left: 14px; }
+  .health-chart-card .range-legend { padding-left: 58px; }
   .chart-area { height: 260px; }
+  .blood-pressure-chart .chart-area { height: 520px; }
   .recharts-cartesian-axis-tick-value { font-size: 9px; }
 }

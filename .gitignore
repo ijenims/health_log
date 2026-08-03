@@ -4,5 +4,9 @@ dist
 *.local
 vite.log
 vite-error.log
+
+# Personal health data (never commit)
+private-data/*
+!private-data/README.md
 vite.log
 vite-error.log
