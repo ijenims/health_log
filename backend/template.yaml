@@ -1,0 +1,143 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Health Log private serverless backend
+
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Architectures:
+      - arm64
+    Timeout: 10
+    MemorySize: 256
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref MeasurementsTable
+        ALLOW_LOCAL_USER: 'false'
+    LoggingConfig:
+      LogFormat: JSON
+
+Resources:
+  HealthLogUserPool:
+    Type: AWS::Cognito::UserPool
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      UserPoolName: !Sub '${AWS::StackName}-users'
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 12
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          RequireUppercase: true
+  HealthLogUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: health-log-web
+      UserPoolId: !Ref HealthLogUserPool
+      GenerateSecret: false
+      PreventUserExistenceErrors: ENABLED
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+
+  HealthLogApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: v1
+      FailOnWarnings: true
+      CorsConfiguration:
+        AllowOrigins:
+          - http://localhost:5173
+          - http://127.0.0.1:5173
+        AllowHeaders:
+          - Authorization
+          - Content-Type
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            AuthorizationScopes: []
+            JwtConfiguration:
+              issuer: !Sub 'https://cognito-idp.${AWS::Region}.amazonaws.com/${HealthLogUserPool}'
+              audience:
+                - !Ref HealthLogUserPoolClient
+            IdentitySource: '$request.header.Authorization'
+
+  MeasurementsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+
+  MeasurementsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/measurements/
+      Handler: index.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref MeasurementsTable
+      Events:
+        GetMeasurements:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HealthLogApi
+            Path: /measurements
+            Method: GET
+        CreateMeasurement:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HealthLogApi
+            Path: /measurements
+            Method: POST
+        UpdateMeasurement:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HealthLogApi
+            Path: /measurements/{date}
+            Method: PUT
+        DeleteMeasurement:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HealthLogApi
+            Path: /measurements/{date}
+            Method: DELETE
+
+Outputs:
+  ApiUrl:
+    Description: Authenticated Health Log API URL
+    Value: !Sub 'https://${HealthLogApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/v1'
+  UserPoolId:
+    Value: !Ref HealthLogUserPool
+  UserPoolClientId:
+    Value: !Ref HealthLogUserPoolClient
+  MeasurementsTableName:
+    Value: !Ref MeasurementsTable

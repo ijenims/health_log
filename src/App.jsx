@@ -6,6 +6,7 @@ import {
 import itemMaster from './data/item-master.json'
 import sampleMeasurementData from './data/measurements.json'
 import { clearPrivateDataset, loadPrivateDataset, savePrivateDataset } from './dataStore'
+import DataManager from './DataManager'
 
 const LINE_COLORS = ['#08a878', '#f07945', '#3688d8', '#8a6edb', '#e55f91']
 
@@ -215,6 +216,8 @@ export default function App() {
   const [dataMessage, setDataMessage] = useState('')
   const [categoryId, setCategoryId] = useState('body')
   const [period, setPeriod] = useState('10')
+  const [managerOpen, setManagerOpen] = useState(false)
+  const [importPreview, setImportPreview] = useState(null)
   const items = useMemo(() => itemMaster.items.map((item) => ({
     ...item,
     referenceRange: healthData.referenceRanges?.[item.itemCode] ?? item.referenceRange,
@@ -258,16 +261,27 @@ export default function App() {
         && record.values && typeof record.values === 'object')
       if (!valid) throw new Error('データ形式が正しくありません')
       dataset.measurements.sort((a, b) => a.examinationDate.localeCompare(b.examinationDate))
-      await savePrivateDataset(dataset)
-      setHealthData(dataset)
-      setDataSource('private')
-      setCategoryId('body')
-      setDataMessage(`${dataset.measurements.length}回分を読み込みました`)
+      const currentDates = new Set(healthData.measurements.map((record) => record.examinationDate))
+      setImportPreview({
+        dataset,
+        fileName: file.name,
+        duplicateCount: dataset.measurements.filter((record) => currentDates.has(record.examinationDate)).length,
+      })
     } catch (error) {
       setDataMessage(`読込み失敗：${error.message}`)
     } finally {
       event.target.value = ''
     }
+  }
+
+  const confirmImport = async () => {
+    const dataset = importPreview.dataset
+    await savePrivateDataset(dataset)
+    setHealthData(dataset)
+    setDataSource('private')
+    setCategoryId('body')
+    setDataMessage(`${dataset.measurements.length}回分を読み込みました`)
+    setImportPreview(null)
   }
 
   const useSampleData = async () => {
@@ -276,6 +290,13 @@ export default function App() {
     setDataSource('sample')
     setCategoryId('body')
     setDataMessage('サンプルデータへ戻しました')
+  }
+
+  const saveManagedDataset = async (dataset) => {
+    await savePrivateDataset(dataset)
+    setHealthData(dataset)
+    setDataSource('private')
+    setDataMessage(`${dataset.measurements.length}回分をブラウザ内に保存しています`)
   }
 
   return (
@@ -291,6 +312,7 @@ export default function App() {
               <input type="file" accept="application/json,.json" onChange={importDataset} />
             </label>
             {dataSource === 'private' && <button type="button" className="sample-button" onClick={useSampleData}>サンプルに戻す</button>}
+            <button type="button" className="manage-button" onClick={() => setManagerOpen(true)}>データ管理</button>
           </div>
         </div>
         {dataMessage && <p className="data-message" role="status">{dataMessage}</p>}
@@ -327,6 +349,24 @@ export default function App() {
         </section>
       </main>
       <footer>{dataSource === 'private' ? '実データをこのブラウザ内に保存しています' : 'サンプルデータを表示しています'}</footer>
+      {managerOpen && <DataManager categories={itemMaster.categories} items={items} dataset={healthData}
+        onSave={saveManagedDataset} onClose={() => setManagerOpen(false)} />}
+      {importPreview && <div className="import-preview-backdrop">
+        <section className="import-preview" role="dialog" aria-modal="true" aria-labelledby="import-preview-title">
+          <span>取込み前確認</span>
+          <h2 id="import-preview-title">データを置き換えますか？</h2>
+          <p>現在のブラウザ内データを、選択したファイルの内容で全件置換します。</p>
+          <dl>
+            <div><dt>ファイル</dt><dd>{importPreview.fileName}</dd></div>
+            <div><dt>取込み件数</dt><dd>{importPreview.dataset.measurements.length}回</dd></div>
+            <div><dt>期間</dt><dd>{importPreview.dataset.measurements[0].examinationDate}〜{importPreview.dataset.measurements.at(-1).examinationDate}</dd></div>
+            <div><dt>現在と同じ年月</dt><dd>{importPreview.duplicateCount}回</dd></div>
+          </dl>
+          <p className="import-warning">必要に応じて、先にデータ管理からバックアップを書き出してください。</p>
+          <div><button type="button" onClick={() => setImportPreview(null)}>キャンセル</button>
+            <button type="button" className="confirm" onClick={confirmImport}>全データを置換</button></div>
+        </section>
+      </div>}
     </div>
   )
 }

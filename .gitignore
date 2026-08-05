@@ -8,5 +8,9 @@ vite-error.log
 # Personal health data (never commit)
 private-data/*
 !private-data/README.md
+
+# AWS SAM
+.aws-sam/
+backend/.aws-sam/
 vite.log
 vite-error.log

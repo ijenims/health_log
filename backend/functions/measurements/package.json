@@ -1,0 +1,13 @@
+{
+  "name": "health-log-measurements-function",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.883.0",
+    "@aws-sdk/lib-dynamodb": "^3.883.0"
+  }
+}
