@@ -24,10 +24,12 @@ button { -webkit-tap-highlight-color: transparent; }
 .data-controls { display: flex; align-items: center; justify-content: flex-end; gap: 7px; flex-wrap: wrap; }
 .data-badge { padding: 4px 8px; border-radius: 20px; color: #657870; background: #edf3f0; font-size: 10px; font-weight: 700; }
 .data-badge.private { color: #057552; background: #dff8ee; }
-.import-button, .sample-button, .manage-button { padding: 7px 10px; border: 1px solid #a9dcca; border-radius: 8px; color: #057552; background: #fff; font-size: 10px; font-weight: 700; cursor: pointer; }
+.import-button, .sample-button, .manage-button, .sign-out-button { padding: 7px 10px; border: 1px solid #a9dcca; border-radius: 8px; color: #057552; background: #fff; font-size: 10px; font-weight: 700; cursor: pointer; }
 .import-button input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .sample-button { color: #667770; border-color: #d5e4de; font-weight: 600; }
 .manage-button { color: #fff; background: #08a878; border-color: #08a878; }
+.sign-out-button { color: #667770; border-color: #d5e4de; }
+.cloud-badge { padding: 4px 8px; border-radius: 20px; color: #086c91; background: #e0f4fb; font-size: 10px; font-weight: 800; }
 .data-message { max-width: 1040px; margin: -13px auto 0; padding: 0 20px 10px; color: #177b59; font-size: 10px; text-align: right; }
 
 main { max-width: 1040px; margin: 0 auto; padding: 30px 16px 48px; }
@@ -104,6 +106,24 @@ main { max-width: 1040px; margin: 0 auto; padding: 30px 16px 48px; }
 .chart-note { text-align: center; color: #8a938f; font-size: 10px; margin: 10px 0 0; }
 .reference-note { text-align: center; color: #9a7771; font-size: 9px; margin: 4px 8px 0; }
 footer { padding: 22px; text-align: center; color: #6f8b7f; font-size: 11px; border-top: 1px solid #dcece5; background: #f7fcfa; }
+
+.auth-screen { display: grid; min-height: 100vh; place-items: center; padding: 24px; background: linear-gradient(160deg, #f7fffc 0%, #e8f8f1 100%); }
+.auth-card { width: min(390px, 100%); padding: 30px; border: 1px solid #d5ebe2; border-radius: 20px; background: #fff; box-shadow: 0 18px 55px rgba(22, 91, 66, .12); }
+.auth-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; color: #153e30; font-size: 18px; font-weight: 900; }
+.auth-brand .brand-mark { width: 31px; height: 31px; }
+.auth-eyebrow { margin: 0 0 5px; color: #08a878; font-size: 10px; font-weight: 900; }
+.auth-card h1 { margin: 0; color: #153e30; font-size: 25px; }
+.auth-description { margin: 7px 0 22px; color: #71847c; font-size: 11px; }
+.auth-card form { display: grid; gap: 15px; }
+.auth-card label { display: grid; gap: 6px; color: #37594c; font-size: 11px; font-weight: 800; }
+.auth-card input { min-height: 44px; padding: 0 12px; border: 1px solid #bfd9cf; border-radius: 9px; color: #17362c; background: #fff; font: inherit; outline: none; }
+.auth-card input:focus { border-color: #08a878; box-shadow: 0 0 0 3px rgba(8,168,120,.12); }
+.auth-card small { color: #82938c; font-size: 9px; font-weight: 500; line-height: 1.5; }
+.auth-card form > button { min-height: 46px; margin-top: 4px; border: 0; border-radius: 9px; color: #fff; background: #08a878; font-weight: 900; cursor: pointer; }
+.auth-card form > button:disabled { opacity: .6; cursor: wait; }
+.auth-message { margin: 0; padding: 10px 11px; border-radius: 8px; color: #a14238; background: #faece9; font-size: 10px; line-height: 1.5; }
+.auth-message.info { color: #086c91; background: #e5f5fb; }
+.auth-loading { color: #557168; font-size: 12px; }
 
 .manager-backdrop { position: fixed; z-index: 20; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(18, 48, 38, .42); backdrop-filter: blur(3px); }
 .data-manager { width: min(900px, 100%); max-height: calc(100vh - 48px); overflow-y: auto; border-radius: 18px; background: #f7fcfa; box-shadow: 0 20px 60px rgba(10, 50, 36, .28); }

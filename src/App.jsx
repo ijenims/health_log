@@ -210,7 +210,7 @@ function HealthChart({ items, measurements, period }) {
   )
 }
 
-export default function App() {
+export default function App({ cloudEnabled = false, onSignOut = null }) {
   const [healthData, setHealthData] = useState(sampleMeasurementData)
   const [dataSource, setDataSource] = useState('sample')
   const [dataMessage, setDataMessage] = useState('')
@@ -306,6 +306,7 @@ export default function App() {
           <div className="brand-mark" aria-hidden="true"><span /></div>
           <div className="brand-copy"><h1>Health Log</h1><p>からだの変化を、ひと目で。</p></div>
           <div className="data-controls">
+            {cloudEnabled && <span className="cloud-badge">AWS接続</span>}
             <span className={dataSource === 'private' ? 'data-badge private' : 'data-badge'}>
               {dataSource === 'private' ? '実データ' : 'サンプル'}</span>
             <label className="import-button">データを読み込む
@@ -313,6 +314,7 @@ export default function App() {
             </label>
             {dataSource === 'private' && <button type="button" className="sample-button" onClick={useSampleData}>サンプルに戻す</button>}
             <button type="button" className="manage-button" onClick={() => setManagerOpen(true)}>データ管理</button>
+            {onSignOut && <button type="button" className="sign-out-button" onClick={onSignOut}>ログアウト</button>}
           </div>
         </div>
         {dataMessage && <p className="data-message" role="status">{dataMessage}</p>}

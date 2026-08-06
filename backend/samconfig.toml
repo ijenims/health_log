@@ -1,0 +1,14 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "health-log-dev"
+resolve_s3 = true
+s3_prefix = "health-log-dev"
+region = "ap-northeast-1"
+profile = "health-log-dev"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+image_repositories = []
+
+[default.global.parameters]
+region = "ap-northeast-1"
