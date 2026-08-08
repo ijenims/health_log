@@ -24,12 +24,16 @@ button { -webkit-tap-highlight-color: transparent; }
 .data-controls { display: flex; align-items: center; justify-content: flex-end; gap: 7px; flex-wrap: wrap; }
 .data-badge { padding: 4px 8px; border-radius: 20px; color: #657870; background: #edf3f0; font-size: 10px; font-weight: 700; }
 .data-badge.private { color: #057552; background: #dff8ee; }
-.import-button, .sample-button, .manage-button, .sign-out-button { padding: 7px 10px; border: 1px solid #a9dcca; border-radius: 8px; color: #057552; background: #fff; font-size: 10px; font-weight: 700; cursor: pointer; }
+.import-button, .sample-button, .manage-button, .migration-button, .sign-out-button { padding: 7px 10px; border: 1px solid #a9dcca; border-radius: 8px; color: #057552; background: #fff; font-size: 10px; font-weight: 700; cursor: pointer; }
 .import-button input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .sample-button { color: #667770; border-color: #d5e4de; font-weight: 600; }
 .manage-button { color: #fff; background: #08a878; border-color: #08a878; }
+.migration-button { color: #086c91; border-color: #a9d9e8; background: #f3fbfe; }
+.migration-button:disabled { opacity: .6; cursor: wait; }
 .sign-out-button { color: #667770; border-color: #d5e4de; }
 .cloud-badge { padding: 4px 8px; border-radius: 20px; color: #086c91; background: #e0f4fb; font-size: 10px; font-weight: 800; }
+.cloud-badge.empty { color: #986126; background: #fff2dc; }
+.cloud-badge.error, .cloud-badge.auth-error { color: #a14238; background: #fae8e6; }
 .data-message { max-width: 1040px; margin: -13px auto 0; padding: 0 20px 10px; color: #177b59; font-size: 10px; text-align: right; }
 
 main { max-width: 1040px; margin: 0 auto; padding: 30px 16px 48px; }
@@ -177,6 +181,9 @@ footer { padding: 22px; text-align: center; color: #6f8b7f; font-size: 11px; bor
 .import-preview > div { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 .import-preview button { min-height: 40px; padding: 0 14px; border: 1px solid #d5e4de; border-radius: 8px; color: #587067; background: #fff; font-weight: 700; cursor: pointer; }
 .import-preview button.confirm { color: #fff; border-color: #08a878; background: #08a878; }
+.import-preview button:disabled { opacity: .55; cursor: wait; }
+.migration-preview dl > div:last-child { background: #eaf9f3; }
+.migration-progress { color: #086c91 !important; font-weight: 800; text-align: center; }
 
 @media (min-width: 720px) {
   .header-inner { padding: 26px 24px; }

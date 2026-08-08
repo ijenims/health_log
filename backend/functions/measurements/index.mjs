@@ -1,8 +1,8 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { BatchWriteCommand, DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb'
-import { aggregateMeasurements, isValidDate, validateMeasurement } from './domain.mjs'
+import { aggregateMeasurements, isValidDate, latestReferenceRanges, validateMeasurement } from './domain.mjs'
 
-export { aggregateMeasurements, validateMeasurement } from './domain.mjs'
+export { aggregateMeasurements, latestReferenceRanges, validateMeasurement } from './domain.mjs'
 
 const tableName = process.env.TABLE_NAME
 const documentClient = DynamoDBDocumentClient.from(new DynamoDBClient({}))
@@ -91,7 +91,10 @@ export const createHandler = (client) => async (event) => {
   try {
     if (method === 'GET') {
       const items = await queryUserItems(client, userId)
-      return response(200, { measurements: aggregateMeasurements(items) })
+      return response(200, {
+        measurements: aggregateMeasurements(items),
+        referenceRanges: latestReferenceRanges(items),
+      })
     }
 
     if (method === 'POST' || method === 'PUT') {

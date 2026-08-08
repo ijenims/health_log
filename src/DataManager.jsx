@@ -124,7 +124,7 @@ export default function DataManager({ categories, items, dataset, onSave, onClos
 
     setSaving(true)
     try {
-      await onSave(nextDataset)
+      await onSave(nextDataset, { action: mode === 'edit' ? 'update' : 'create', record: nextRecord })
       setValues({})
       setExaminationDate('')
       setMessage(`${examinationDate}のデータを${mode === 'edit' ? '更新' : '登録'}しました。バックアップ書出しを推奨します。`)
@@ -146,7 +146,7 @@ export default function DataManager({ categories, items, dataset, onSave, onClos
       await onSave({
         ...dataset,
         measurements: dataset.measurements.filter((record) => record.examinationDate !== examinationDate),
-      })
+      }, { action: 'delete', examinationDate })
       setValues({})
       setExaminationDate('')
       setMessage('健診データを削除しました。バックアップ書出しを推奨します。')

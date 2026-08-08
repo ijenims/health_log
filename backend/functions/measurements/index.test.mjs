@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { aggregateMeasurements, validateMeasurement } from './domain.mjs'
+import { aggregateMeasurements, latestReferenceRanges, validateMeasurement } from './domain.mjs'
 
 test('validates a measurement payload', () => {
   assert.equal(validateMeasurement({ examinationDate: '2026-07', values: { weight: 65.2 } }), null)
@@ -19,4 +19,16 @@ test('aggregates DynamoDB items into examinations', () => {
     { examinationDate: '2025-06', values: { weight: 66.1 }, source: '健診' },
     { examinationDate: '2026-07', values: { weight: 65.2, bmi: 22.1 }, source: '健診' },
   ])
+})
+
+test('selects the latest stored reference range for each item', () => {
+  const ranges = latestReferenceRanges([
+    { examinationDate: '2024-01', itemCode: 'systolic', lowerLimit: null, upperLimit: 135 },
+    { examinationDate: '2026-01', itemCode: 'systolic', lowerLimit: null, upperLimit: 129 },
+    { examinationDate: '2025-01', itemCode: 'height', lowerLimit: null, upperLimit: null },
+  ])
+  assert.deepEqual(ranges, {
+    systolic: { lower: null, upper: 129 },
+    height: { lower: null, upper: null },
+  })
 })

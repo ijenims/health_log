@@ -6,6 +6,10 @@ import {
 import itemMaster from './data/item-master.json'
 import sampleMeasurementData from './data/measurements.json'
 import { clearPrivateDataset, loadPrivateDataset, savePrivateDataset } from './dataStore'
+import {
+  createCloudMeasurement, deleteCloudMeasurement, getCloudMeasurements,
+  isCloudApiConfigured, updateCloudMeasurement,
+} from './cloudApi'
 import DataManager from './DataManager'
 
 const LINE_COLORS = ['#08a878', '#f07945', '#3688d8', '#8a6edb', '#e55f91']
@@ -218,6 +222,12 @@ export default function App({ cloudEnabled = false, onSignOut = null }) {
   const [period, setPeriod] = useState('10')
   const [managerOpen, setManagerOpen] = useState(false)
   const [importPreview, setImportPreview] = useState(null)
+  const [cloudStatus, setCloudStatus] = useState(cloudEnabled ? 'checking' : 'disabled')
+  const [cloudCount, setCloudCount] = useState(0)
+  const [localDataset, setLocalDataset] = useState(null)
+  const [migrationPreview, setMigrationPreview] = useState(null)
+  const [migrationProgress, setMigrationProgress] = useState(null)
+  const [pendingMigrationCount, setPendingMigrationCount] = useState(0)
   const items = useMemo(() => itemMaster.items.map((item) => ({
     ...item,
     referenceRange: healthData.referenceRanges?.[item.itemCode] ?? item.referenceRange,
@@ -239,13 +249,56 @@ export default function App({ cloudEnabled = false, onSignOut = null }) {
   })()
 
   useEffect(() => {
-    loadPrivateDataset().then((dataset) => {
-      if (dataset?.measurements?.length) {
-        setHealthData(dataset)
-        setDataSource('private')
+    let active = true
+    const loadData = async () => {
+      let localDataset = null
+      try {
+        localDataset = await loadPrivateDataset()
+        if (active && localDataset?.measurements?.length) {
+          setLocalDataset(localDataset)
+          setHealthData(localDataset)
+          setDataSource('private')
+        }
+      } catch {
+        if (active) setDataMessage('保存済みデータを読み込めませんでした')
       }
-    }).catch(() => setDataMessage('保存済みデータを読み込めませんでした'))
-  }, [])
+
+      if (!cloudEnabled || !isCloudApiConfigured || !active) return
+      setCloudStatus('checking')
+      try {
+        const cloudDataset = await getCloudMeasurements()
+        const cloudMeasurements = cloudDataset.measurements
+        const cloudDates = new Set(cloudMeasurements.map((record) => record.examinationDate))
+        setPendingMigrationCount(localDataset?.measurements
+          ?.filter((record) => !cloudDates.has(record.examinationDate)).length ?? 0)
+        if (!active) return
+        if (cloudMeasurements.length) {
+          const baseDataset = localDataset?.measurements?.length ? localDataset : sampleMeasurementData
+          setHealthData({
+            ...baseDataset,
+            measurements: cloudMeasurements,
+            referenceRanges: Object.keys(cloudDataset.referenceRanges).length
+              ? cloudDataset.referenceRanges : baseDataset.referenceRanges,
+          })
+          setDataSource('cloud')
+          setCloudStatus('ready')
+          setCloudCount(cloudMeasurements.length)
+          setDataMessage(`AWSから${cloudMeasurements.length}回分を読み込みました`)
+        } else {
+          setCloudStatus('empty')
+          setCloudCount(0)
+          setPendingMigrationCount(localDataset?.measurements?.length ?? 0)
+          setDataMessage('AWSには健診データがまだありません。現在はブラウザ内データを表示しています')
+        }
+      } catch (error) {
+        if (!active) return
+        setCloudStatus(error?.message === 'AUTH_REQUIRED' ? 'auth-error' : 'error')
+        setDataMessage('AWSのデータを確認できませんでした。ブラウザ内データを表示しています')
+      }
+    }
+    loadData()
+    return () => { active = false }
+  }, [cloudEnabled])
 
   useEffect(() => {
     if (!categories.some((entry) => entry.id === categoryId)) setCategoryId(categories[0]?.id ?? 'body')
@@ -278,6 +331,11 @@ export default function App({ cloudEnabled = false, onSignOut = null }) {
     const dataset = importPreview.dataset
     await savePrivateDataset(dataset)
     setHealthData(dataset)
+    setLocalDataset(dataset)
+    if (cloudEnabled && cloudStatus === 'ready') {
+      const cloudDates = new Set(healthData.measurements.map((record) => record.examinationDate))
+      setPendingMigrationCount(dataset.measurements.filter((record) => !cloudDates.has(record.examinationDate)).length)
+    }
     setDataSource('private')
     setCategoryId('body')
     setDataMessage(`${dataset.measurements.length}回分を読み込みました`)
@@ -287,16 +345,111 @@ export default function App({ cloudEnabled = false, onSignOut = null }) {
   const useSampleData = async () => {
     await clearPrivateDataset()
     setHealthData(sampleMeasurementData)
+    setLocalDataset(null)
+    setPendingMigrationCount(0)
     setDataSource('sample')
     setCategoryId('body')
     setDataMessage('サンプルデータへ戻しました')
   }
 
-  const saveManagedDataset = async (dataset) => {
+  const saveManagedDataset = async (dataset, operation) => {
+    if (dataSource === 'cloud' && cloudEnabled) {
+      const payload = operation.record ? {
+        ...operation.record,
+        referenceRanges: dataset.referenceRanges ?? {},
+      } : null
+      if (operation.action === 'create') await createCloudMeasurement(payload)
+      if (operation.action === 'update') {
+        await updateCloudMeasurement(operation.record.examinationDate, payload)
+      }
+      if (operation.action === 'delete') await deleteCloudMeasurement(operation.examinationDate)
+      const cloudDataset = await getCloudMeasurements()
+      const cloudMeasurements = cloudDataset.measurements
+      const synchronizedDataset = {
+        ...dataset,
+        measurements: cloudMeasurements,
+        referenceRanges: Object.keys(cloudDataset.referenceRanges).length
+          ? cloudDataset.referenceRanges : dataset.referenceRanges,
+      }
+      await savePrivateDataset(synchronizedDataset)
+      setHealthData(synchronizedDataset)
+      setLocalDataset(synchronizedDataset)
+      setDataSource('cloud')
+      setCloudStatus(cloudMeasurements.length ? 'ready' : 'empty')
+      setCloudCount(cloudMeasurements.length)
+      setPendingMigrationCount(0)
+      setDataMessage(`AWSとブラウザ内バックアップを更新しました（${cloudMeasurements.length}回）`)
+      return
+    }
+
     await savePrivateDataset(dataset)
     setHealthData(dataset)
+    setLocalDataset(dataset)
     setDataSource('private')
     setDataMessage(`${dataset.measurements.length}回分をブラウザ内に保存しています`)
+  }
+
+  const openMigrationPreview = async () => {
+    if (!localDataset?.measurements?.length) {
+      setDataMessage('移行できるブラウザ内データがありません')
+      return
+    }
+    setMigrationProgress({ current: 0, total: 0, checking: true })
+    try {
+      const cloudDataset = await getCloudMeasurements()
+      const existing = cloudDataset.measurements
+      const existingDates = new Set(existing.map((record) => record.examinationDate))
+      const missing = localDataset.measurements.filter((record) => !existingDates.has(record.examinationDate))
+      setPendingMigrationCount(missing.length)
+      const firstDate = localDataset.measurements[0]?.examinationDate
+      const lastDate = localDataset.measurements.at(-1)?.examinationDate
+      setMigrationPreview({
+        localCount: localDataset.measurements.length,
+        cloudCount: existing.length,
+        duplicateCount: localDataset.measurements.length - missing.length,
+        firstDate,
+        lastDate,
+        missing,
+      })
+    } catch {
+      setDataMessage('AWSの移行状況を確認できませんでした')
+    } finally {
+      setMigrationProgress(null)
+    }
+  }
+
+  const confirmMigration = async () => {
+    const records = migrationPreview.missing
+    setMigrationProgress({ current: 0, total: records.length, checking: false })
+    try {
+      for (let index = 0; index < records.length; index += 1) {
+        await createCloudMeasurement({
+          ...records[index],
+          referenceRanges: localDataset.referenceRanges ?? {},
+        })
+        setMigrationProgress({ current: index + 1, total: records.length, checking: false })
+      }
+      const cloudDataset = await getCloudMeasurements()
+      const cloudMeasurements = cloudDataset.measurements
+      setHealthData({
+        ...localDataset,
+        measurements: cloudMeasurements,
+        referenceRanges: Object.keys(cloudDataset.referenceRanges).length
+          ? cloudDataset.referenceRanges : localDataset.referenceRanges,
+      })
+      setDataSource('cloud')
+      setCloudStatus('ready')
+      setCloudCount(cloudMeasurements.length)
+      setPendingMigrationCount(0)
+      setMigrationPreview(null)
+      setDataMessage(`AWSへ${records.length}回分を移行しました（合計${cloudMeasurements.length}回）`)
+    } catch (error) {
+      setDataMessage(`AWS移行を途中で停止しました：${error.message}`)
+      setMigrationPreview(null)
+      setCloudStatus('error')
+    } finally {
+      setMigrationProgress(null)
+    }
   }
 
   return (
@@ -306,14 +459,21 @@ export default function App({ cloudEnabled = false, onSignOut = null }) {
           <div className="brand-mark" aria-hidden="true"><span /></div>
           <div className="brand-copy"><h1>Health Log</h1><p>からだの変化を、ひと目で。</p></div>
           <div className="data-controls">
-            {cloudEnabled && <span className="cloud-badge">AWS接続</span>}
-            <span className={dataSource === 'private' ? 'data-badge private' : 'data-badge'}>
-              {dataSource === 'private' ? '実データ' : 'サンプル'}</span>
+            {cloudEnabled && <span className={`cloud-badge ${cloudStatus}`}>
+              {cloudStatus === 'checking' ? 'AWS確認中' : cloudStatus === 'empty' ? 'AWS 0件'
+                : cloudStatus === 'ready' ? `AWS同期済み ${cloudCount}件`
+                  : cloudStatus === 'disabled' ? 'AWS未設定' : 'AWS接続エラー'}
+            </span>}
+            {dataSource !== 'cloud' && <span className={dataSource === 'private' ? 'data-badge private' : 'data-badge'}>
+              {dataSource === 'private' ? 'ブラウザ内' : 'サンプル'}</span>}
             <label className="import-button">データを読み込む
               <input type="file" accept="application/json,.json" onChange={importDataset} />
             </label>
             {dataSource === 'private' && <button type="button" className="sample-button" onClick={useSampleData}>サンプルに戻す</button>}
             <button type="button" className="manage-button" onClick={() => setManagerOpen(true)}>データ管理</button>
+            {cloudEnabled && pendingMigrationCount > 0 && ['empty', 'ready'].includes(cloudStatus)
+              && <button type="button" className="migration-button" onClick={openMigrationPreview}
+                disabled={Boolean(migrationProgress)}>AWSへ移行</button>}
             {onSignOut && <button type="button" className="sign-out-button" onClick={onSignOut}>ログアウト</button>}
           </div>
         </div>
@@ -350,7 +510,8 @@ export default function App({ cloudEnabled = false, onSignOut = null }) {
           <p className="reference-note">基準範囲は最新の健診情報を全期間に適用しています。</p>
         </section>
       </main>
-      <footer>{dataSource === 'private' ? '実データをこのブラウザ内に保存しています' : 'サンプルデータを表示しています'}</footer>
+      <footer>{dataSource === 'cloud' ? '認証済みAWSデータを表示しています'
+        : dataSource === 'private' ? '実データをこのブラウザ内に保存しています' : 'サンプルデータを表示しています'}</footer>
       {managerOpen && <DataManager categories={itemMaster.categories} items={items} dataset={healthData}
         onSave={saveManagedDataset} onClose={() => setManagerOpen(false)} />}
       {importPreview && <div className="import-preview-backdrop">
@@ -367,6 +528,28 @@ export default function App({ cloudEnabled = false, onSignOut = null }) {
           <p className="import-warning">必要に応じて、先にデータ管理からバックアップを書き出してください。</p>
           <div><button type="button" onClick={() => setImportPreview(null)}>キャンセル</button>
             <button type="button" className="confirm" onClick={confirmImport}>全データを置換</button></div>
+        </section>
+      </div>}
+      {migrationPreview && <div className="import-preview-backdrop">
+        <section className="import-preview migration-preview" role="dialog" aria-modal="true" aria-labelledby="migration-preview-title">
+          <span>AWS移行前確認</span>
+          <h2 id="migration-preview-title">ブラウザ内データをAWSへ移行しますか？</h2>
+          <p>既にAWSにある年月は上書きせず、未登録の年月だけを追加します。</p>
+          <dl>
+            <div><dt>ブラウザ内</dt><dd>{migrationPreview.localCount}回</dd></div>
+            <div><dt>期間</dt><dd>{migrationPreview.firstDate}〜{migrationPreview.lastDate}</dd></div>
+            <div><dt>現在のAWS</dt><dd>{migrationPreview.cloudCount}回</dd></div>
+            <div><dt>重複・上書きなし</dt><dd>{migrationPreview.duplicateCount}回</dd></div>
+            <div><dt>今回追加</dt><dd>{migrationPreview.missing.length}回</dd></div>
+          </dl>
+          <p className="import-warning">ブラウザ内データは移行後もバックアップとして残ります。</p>
+          {migrationProgress && !migrationProgress.checking
+            && <p className="migration-progress" role="status">{migrationProgress.current} / {migrationProgress.total} 回を送信中…</p>}
+          <div><button type="button" onClick={() => setMigrationPreview(null)} disabled={Boolean(migrationProgress)}>キャンセル</button>
+            <button type="button" className="confirm" onClick={confirmMigration}
+              disabled={Boolean(migrationProgress) || migrationPreview.missing.length === 0}>
+              {migrationPreview.missing.length ? `${migrationPreview.missing.length}回分をAWSへ移行` : '追加データなし'}
+            </button></div>
         </section>
       </div>}
     </div>

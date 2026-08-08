@@ -31,3 +31,20 @@ export const aggregateMeasurements = (items) => {
   }
   return [...byDate.values()].sort((a, b) => a.examinationDate.localeCompare(b.examinationDate))
 }
+
+export const latestReferenceRanges = (items) => {
+  const ranges = {}
+  const sorted = [...items].sort((a, b) => b.examinationDate.localeCompare(a.examinationDate))
+  for (const item of sorted) {
+    if (ranges[item.itemCode]) continue
+    const hasLower = Object.hasOwn(item, 'lowerLimit')
+    const hasUpper = Object.hasOwn(item, 'upperLimit')
+    if (hasLower || hasUpper) {
+      ranges[item.itemCode] = {
+        lower: hasLower ? item.lowerLimit : null,
+        upper: hasUpper ? item.upperLimit : null,
+      }
+    }
+  }
+  return ranges
+}
