@@ -58,6 +58,12 @@ Amplify側にも次の環境変数を設定してください。
 
 `main`へのプッシュを契機に、`npm ci`、`npm run build`、`dist`の配信が自動実行されます。
 
+## バックアップと復旧
+
+本番データは、アプリからのJSON書出し、DynamoDBのポイントインタイムリカバリ、長期基準点用のオンデマンドバックアップで保護します。
+
+日常運用、AWS状態確認、事故別の復旧方法は[`docs/backup-and-recovery.md`](docs/backup-and-recovery.md)を参照してください。
+
 ## データの場所
 
 検査項目マスタは `src/data/item-master.json`、サンプル測定結果は `src/data/measurements.json` にあります。項目情報と測定結果を分離し、`itemCode`で関連付けています。

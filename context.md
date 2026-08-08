@@ -523,3 +523,57 @@ JSON取込みプレビューも実装済み：
 2. JSON／CSV書き出しとDynamoDBポイントインタイムリカバリを含むバックアップ・復旧手順を整備する。
 3. Amplify、API Gateway、Lambda、DynamoDBの料金とBudget通知を定期確認する。
 4. 必要になった場合だけ独自ドメインやWAFを検討する。
+
+## 22. バックアップ・復旧整備（2026-08-08）
+
+### 三層バックアップ
+
+- 日常復旧用：本番アプリの`データ管理`からJSONを書き出す。
+- 短期事故用：DynamoDB PITRで直近35日以内の任意時点へ復元する。
+- 長期基準点：DynamoDBオンデマンドバックアップを必要な節目で作成する。
+- IndexedDBはAWS取得後に同期される補助コピーであり、単独の正式バックアップとはみなさない。
+
+### AWS保護状態
+
+- DynamoDBテーブルは`ACTIVE`、`PAY_PER_REQUEST`。
+- 物理項目数918、サイズ180,891 bytes。59健診日を検査項目単位で保持している。
+- PITRは`ENABLED`、復旧期間35日。
+- `DeletionProtectionEnabled: true`をSAMテンプレートへ追加し、既存スタックへ反映済み。
+- CloudFormation更新時にDynamoDBの`Replacement: False`を確認し、実データを維持した。
+- CloudFormation側には以前から`DeletionPolicy: Retain`と`UpdateReplacePolicy: Retain`を設定済み。
+
+### 本番公開時点の長期バックアップ
+
+- オンデマンドバックアップ`health-log-production-baseline-20260808`を作成済み。
+- 状態`AVAILABLE`、サイズ180,891 bytes、作成日時2026-08-08 21:24 JST。
+- PITRとは別に、削除するまで残す本番公開時点の基準スナップショットとする。
+
+### JSONバックアップ受入確認
+
+- 本番アプリから`health-log-backup-20260808-2127.json`を書き出し、`private-data/backups/`へ保存済み。
+- 健診件数59、期間1989-04〜2026-07、基準範囲21項目。
+- 不正年月0、重複年月0、値構造エラー0を確認済み。
+- 実データファイルは`.gitignore`対象であり、GitHubへ追加しない。
+- 月1回と大量変更前にJSONを書き出す。CSVは閲覧・確認用、JSONを復旧用とする。
+
+### 追加した運用資材
+
+- `docs/backup-and-recovery.md`：日常運用と事故規模別の復旧手順。
+- `scripts/check-aws-backup-status.ps1`：テーブル、削除保護、PITR、オンデマンドバックアップの読取り確認。
+- `scripts/create-aws-backup.ps1`：確認プロンプト付きオンデマンドバックアップ作成。
+- `private-data/README.md`：ローカルバックアップの運用ルールを追記。
+- READMEから復旧手順書へリンクした。
+
+### 復旧方針
+
+- 1件の誤更新はJSON／CSVで正しい値を確認し、データ管理画面から修正する。
+- 1健診年月の誤削除はJSONをブラウザへ読み込み、`AWSへ移行`で不足年月だけを再追加する。
+- 多数データの事故はPITRで事故直前を新テーブルへ復元し、内容確認後にLambda参照先とIAM権限を切り替える。
+- PITRは元テーブルを上書きせず、新しいテーブルを作る。復元だけではアプリの参照先は変わらない。
+- 実際のPITR復元テーブル作成は、不要なリソースと費用を避けるため今回は実施していない。
+
+### 次の開始地点
+
+1. IAMユーザーの`AdministratorAccess`をHealth Logの開発・運用に必要な権限へ縮小する。
+2. 月1回のJSONバックアップとAWS Budget通知確認を継続する。
+3. 実際に事故が起きた場合は`docs/backup-and-recovery.md`に従い、復元先を新テーブルとして作成する。
