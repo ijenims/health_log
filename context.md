@@ -467,3 +467,59 @@ JSON取込みプレビューも実装済み：
 
 - Cognitoログイン、AWS読込み、実データ移行、CRUD、最新基準範囲、IndexedDBバックアップまで動作確認済み。
 - 次は本番公開に向けたホスティング、独自ドメインの要否、IAM権限の縮小、バックアップ／復旧手順の整備を検討する。
+
+## 21. Amplify Hosting本番公開（2026-08-08）
+
+### 公開構成
+
+- AWS Amplify Hostingアプリ`health-log`を東京リージョンに作成済み。
+- AmplifyアプリID：`d36nro0dom7v4`。
+- 本番URL：`https://main.d36nro0dom7v4.amplifyapp.com`。
+- GitHubの`ijenims/health_log`リポジトリだけをAmplify GitHub Appへ許可し、`main`ブランチへ接続した。
+- `main`へのプッシュでフロントが自動ビルド・デプロイされる。
+- 独自ドメイン、Amplify側の追加パスワード保護、SSR、WAFは現時点では使用しない。
+- URL自体はインターネットから到達可能だが、Health Log本体は既存のCognitoログインで保護される。
+
+### ビルド設定
+
+- リポジトリ直下に`amplify.yml`を追加。
+- `npm ci`、`npm run build`を実行し、`dist`を配信する。
+- AWS接続用の4項目をAmplify環境変数へ設定済み：
+  - `VITE_AWS_REGION`
+  - `VITE_COGNITO_USER_POOL_ID`
+  - `VITE_COGNITO_USER_POOL_CLIENT_ID`
+  - `VITE_API_URL`
+- これらはブラウザへ配布される接続設定であり、AWSアクセスキーやパスワードは含まない。
+- READMEへローカルAWS接続とAmplify Hostingの設定方法を追記した。
+
+### 初回ビルド失敗と対処
+
+- 初回デプロイは`npm ci`で失敗した。
+- Windowsで生成した`package-lock.json`に、Vite 8系のLinux用WASMバインディングが要求する`@emnapi/core`と`@emnapi/runtime`の実体情報が欠けていたことが原因。
+- 2パッケージをルートの`optionalDependencies`へ明示し、隔離フォルダでロックファイルを新規生成した。
+- ローカルで`npm ci`から`npm run build`まで成功することを確認後、修正をプッシュ。
+- Amplifyジョブ2が`SUCCEED`となり、本番URLがHTTP 200を返すことを確認済み。
+- 検証時に起動中だったローカルViteサーバーは、依存再構築のため停止した。必要時は`npm run dev`で再起動する。
+
+### 公開URLのCORS対応
+
+- 公開直後はログインできたが、API GatewayがローカルOriginだけを許可していたため`AWS接続エラー`になった。
+- `backend/template.yaml`に`FrontendOrigin`パラメータを追加し、Amplify本番URLをCORS許可Originへ追加した。
+- SAMテンプレート検証、Lambda単体テスト3件、SAMビルドに成功。
+- 既存`health-log-dev`スタックを更新し、変更対象がAPI GatewayだけでDynamoDBの置換がないことを確認した。
+- 本番OriginからのOPTIONS要求がHTTP 204となり、`access-control-allow-origin`、`authorization`、必要なHTTPメソッドが許可されることを確認済み。
+
+### 本番受入確認
+
+- Cognitoの既存ユーザーで本番URLへログインできる。
+- ヘッダーに`AWS同期済み 59件`と表示され、DynamoDBの実データを取得できる。
+- グラフとデータ管理画面が正常表示される。
+- PCブラウザとiPhoneの両方で動作確認済み。
+- 現時点で本番公開は完了扱い。
+
+### 次の開始地点
+
+1. IAMユーザーの`AdministratorAccess`をHealth Logの開発・運用に必要な権限へ縮小する。
+2. JSON／CSV書き出しとDynamoDBポイントインタイムリカバリを含むバックアップ・復旧手順を整備する。
+3. Amplify、API Gateway、Lambda、DynamoDBの料金とBudget通知を定期確認する。
+4. 必要になった場合だけ独自ドメインやWAFを検討する。
