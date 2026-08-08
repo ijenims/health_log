@@ -16,5 +16,9 @@
     "react-dom": "latest",
     "recharts": "latest",
     "vite": "latest"
+  },
+  "optionalDependencies": {
+    "@emnapi/core": "2.0.0-alpha.3",
+    "@emnapi/runtime": "2.0.0-alpha.3"
   }
 }
